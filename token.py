@@ -28,11 +28,20 @@ class TokenType(Enum):
     LEFT_BRACKET = "["
     RIGHT_BRACKET = "]"
 
+    TRUE = "TRUE"
+    FALSE = "FALSE"
+
     NEWLINE = "NEWLINE"
     INDENT = "INDENT"
     DEDENT = "DEDENT"
 
+    AND = "and"
+    OR = "or"
+    NOT = "not"
+
     EOF = "EOF"
+
+    STRING = "STRING"
 
 
 class Token:

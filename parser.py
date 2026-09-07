@@ -2,6 +2,8 @@ from token import TokenType
 
 from nap_ast import (
     NumberExpr,
+    BooleanExpr,
+    StringExpr,
     BinaryExpr,
     VariableExpr,
     AssignmentExpr,
@@ -12,7 +14,8 @@ from nap_ast import (
     CallExpr,
     ListExpr,
     ListIndexExpr,
-    ForStmt
+    ForStmt,
+    UnaryExpr
 )
 
 class Parser:
@@ -29,9 +32,26 @@ class Parser:
     def parse_factor(self):
         token = self.current()
 
+        if token.type == TokenType.NOT:
+            self.advance()
+            operand = self.parse_factor()
+            return UnaryExpr("not", operand)
+
         if token.type == TokenType.NUMBER:
             self.advance()
             return NumberExpr(int(token.value))
+
+        if token.type == TokenType.TRUE:
+            self.advance()
+            return BooleanExpr(True)
+
+        if token.type == TokenType.FALSE:
+            self.advance()
+            return BooleanExpr(False)
+
+        if token.type == TokenType.STRING:
+            self.advance()
+            return StringExpr(token.value)
 
         if token.type == TokenType.LEFT_BRACKET:
             self.advance()
@@ -40,7 +60,7 @@ class Parser:
 
             if self.current().type != TokenType.RIGHT_BRACKET:
                 while True:
-                    elements.append(self.parse_expression())
+                    elements.append(self.parse_or())
 
                     if self.current().type == TokenType.RIGHT_BRACKET:
                         break
@@ -66,7 +86,7 @@ class Parser:
 
                 if self.current().type != TokenType.RIGHT_PAREN:
                     while True:
-                        arguments.append(self.parse_comparison())
+                        arguments.append(self.parse_or())
 
                         if self.current().type == TokenType.RIGHT_PAREN:
                             break
@@ -134,15 +154,15 @@ class Parser:
             and self.tokens[self.position + 1].type == TokenType.EQUAL
         ):
             name = self.current().value
-            self.advance()
 
             self.advance()
+            self.advance()
 
-            value = self.parse_expression()
+            value = self.parse_or()
 
             return AssignmentExpr(name, value)
 
-        return self.parse_comparison()
+        return self.parse_or()
 
     def parse_statement(self):
         if (
@@ -471,3 +491,39 @@ class Parser:
         self.advance()
 
         return ForStmt(variable, iterable, body)
+
+    def parse_or(self):
+        left = self.parse_and()
+
+        while self.current().type == TokenType.OR:
+            self.advance()
+
+            right = self.parse_and()
+
+            left = BinaryExpr(left, "or", right)
+
+        return left
+
+    def parse_and(self):
+        left = self.parse_comparison()
+
+        while self.current().type == TokenType.AND:
+            self.advance()
+
+            right = self.parse_comparison()
+
+            left = BinaryExpr(left, "and", right)
+
+        return left
+
+    def parse_or(self):
+        left = self.parse_and()
+
+        while self.current().type == TokenType.OR:
+            self.advance()
+
+            right = self.parse_and()
+
+            left = BinaryExpr(left, "or", right)
+
+        return left

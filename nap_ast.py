@@ -89,9 +89,13 @@ class BinaryExpr:
         if self.operator == "!=":
             return left != right
 
-        raise RuntimeError(
-            f"Unknown operator: {self.operator}"
-        )
+        if self.operator == "and":
+            return bool(left) and bool(right)
+
+        if self.operator == "or":
+            return bool(left) or bool(right)
+
+        raise RuntimeError(f"Unknown operator: {self.operator}")
 
 class WhileStmt:
     def __init__(self, condition, body):
@@ -199,6 +203,13 @@ class ListIndexExpr:
         except IndexError:
             raise RuntimeError("List index out of range")
 
+class BooleanExpr:
+    def __init__(self, value):
+        self.value = value
+
+    def evaluate(self, env):
+        return self.value
+
 class ForStmt:
     def __init__(self, variable, iterable, body):
         self.variable = variable
@@ -219,4 +230,26 @@ class ForStmt:
             for statement in self.body:
                 result = statement.evaluate(env)
 
-        return result
+        return 
+
+class UnaryExpr:
+    def __init__(self, operator, operand):
+        self.operator = operator
+        self.operand = operand
+
+    def evaluate(self, env):
+        value = self.operand.evaluate(env)
+
+        if self.operator == "not":
+            return not bool(value)
+
+        raise RuntimeError(
+            f"Unknown unary operator: {self.operator}"
+        )
+
+class StringExpr:
+    def __init__(self, value):
+        self.value = value
+
+    def evaluate(self, env):
+        return self.value

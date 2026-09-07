@@ -1,4 +1,4 @@
-numbers = [10, 20, 30, 40]
+name = "Billy"
 
-for x in numbers:
-    print(x)
+print(name)
+print("Hello World")

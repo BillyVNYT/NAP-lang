@@ -32,6 +32,21 @@ class Lexer:
             value += self.current()
             self.advance()
 
+        if value == "true":
+            return Token(TokenType.TRUE, value)
+
+        if value == "false":
+            return Token(TokenType.FALSE, value)
+
+        if value == "and":
+            return Token(TokenType.AND, value)
+
+        if value == "or":
+            return Token(TokenType.OR, value)
+
+        if value == "not":
+            return Token(TokenType.NOT, value)
+
         return Token(TokenType.IDENTIFIER, value)
 
     def tokenize(self):
@@ -69,6 +84,10 @@ class Lexer:
 
             if self.current().isspace():
                 self.advance()
+                continue
+
+            if self.current() == '"':
+                tokens.append(self.read_string())
                 continue
 
             if self.current().isdigit():
@@ -183,3 +202,19 @@ class Lexer:
         tokens.append(Token(TokenType.EOF, ""))
 
         return tokens
+
+    def read_string(self):
+        self.advance()  # bỏ dấu "
+
+        value = ""
+
+        while self.current() != '"' and self.current() != "\0":
+            value += self.current()
+            self.advance()
+
+        if self.current() == "\0":
+            raise SyntaxError("Unterminated string")
+
+        self.advance()  # bỏ dấu "
+
+        return Token(TokenType.STRING, value)
