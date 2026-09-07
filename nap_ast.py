@@ -103,13 +103,16 @@ class WhileStmt:
         self.body = body
 
     def evaluate(self, env):
-        result = None
-
         while self.condition.evaluate(env):
-            for statement in self.body:
-                result = statement.evaluate(env)
+            try:
+                for statement in self.body:
+                    statement.evaluate(env)
 
-        return result
+            except ContinueSignal:
+                continue
+
+            except BreakSignal:
+                break
 
 class ReturnSignal(Exception):
     def __init__(self, value):
@@ -243,11 +246,60 @@ class UnaryExpr:
         if self.operator == "not":
             return not bool(value)
 
+        if self.operator == "-":
+            return -value
+
         raise RuntimeError(
             f"Unknown unary operator: {self.operator}"
         )
 
 class StringExpr:
+    def __init__(self, value):
+        self.value = value
+
+    def evaluate(self, env):
+        return self.value
+
+class MethodCallExpr:
+    def __init__(self, object_expr, method, arguments):
+        self.object_expr = object_expr
+        self.method = method
+        self.arguments = arguments
+
+    def evaluate(self, env):
+        obj = self.object_expr.evaluate(env)
+        args = [arg.evaluate(env) for arg in self.arguments]
+
+        if self.method == "append":
+            if not isinstance(obj, list):
+                raise RuntimeError("append() requires a list")
+
+            if len(args) != 1:
+                raise RuntimeError("append() requires 1 argument")
+
+            obj.append(args[0])
+            return None
+
+        raise RuntimeError(f"Unknown method: {self.method}")
+
+class BreakSignal(Exception):
+    pass
+
+
+class ContinueSignal(Exception):
+    pass
+
+
+class BreakStmt:
+    def evaluate(self, env):
+        raise BreakSignal()
+
+
+class ContinueStmt:
+    def evaluate(self, env):
+        raise ContinueSignal()
+
+class FloatExpr:
     def __init__(self, value):
         self.value = value
 

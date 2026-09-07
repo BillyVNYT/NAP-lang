@@ -15,7 +15,11 @@ from nap_ast import (
     ListExpr,
     ListIndexExpr,
     ForStmt,
-    UnaryExpr
+    UnaryExpr,
+    MethodCallExpr,
+    BreakStmt,
+    ContinueStmt,
+    FloatExpr
 )
 
 class Parser:
@@ -37,9 +41,18 @@ class Parser:
             operand = self.parse_factor()
             return UnaryExpr("not", operand)
 
+        if token.type == TokenType.MINUS:
+            self.advance()
+            operand = self.parse_factor()
+            return UnaryExpr("-", operand)
+
         if token.type == TokenType.NUMBER:
             self.advance()
             return NumberExpr(int(token.value))
+
+        if token.type == TokenType.FLOAT:
+            self.advance()
+            return FloatExpr(float(token.value))
 
         if token.type == TokenType.TRUE:
             self.advance()
@@ -52,6 +65,38 @@ class Parser:
         if token.type == TokenType.STRING:
             self.advance()
             return StringExpr(token.value)
+
+        while self.current().type == TokenType.DOT:
+            self.advance()
+
+            if self.current().type != TokenType.IDENTIFIER:
+                raise SyntaxError("Expected method name")
+
+            method = self.current().value
+            self.advance()
+
+            if self.current().type != TokenType.LEFT_PAREN:
+                raise SyntaxError("Expected '(' after method name")
+
+            self.advance()
+
+            arguments = []
+
+            if self.current().type != TokenType.RIGHT_PAREN:
+                while True:
+                    arguments.append(self.parse_or())
+
+                    if self.current().type == TokenType.RIGHT_PAREN:
+                        break
+
+                    if self.current().type != TokenType.COMMA:
+                        raise SyntaxError("Expected ','")
+
+                    self.advance()
+
+            self.advance()
+
+            expr = MethodCallExpr(expr, method, arguments)
 
         if token.type == TokenType.LEFT_BRACKET:
             self.advance()
@@ -79,6 +124,7 @@ class Parser:
 
             expr = VariableExpr(token.value)
 
+            # function call: foo(...)
             if self.current().type == TokenType.LEFT_PAREN:
                 self.advance()
 
@@ -100,6 +146,40 @@ class Parser:
 
                 expr = CallExpr(expr, arguments)
 
+            # method call: foo.bar(...)
+            while self.current().type == TokenType.DOT:
+                self.advance()
+
+                if self.current().type != TokenType.IDENTIFIER:
+                    raise SyntaxError("Expected method name")
+
+                method = self.current().value
+                self.advance()
+
+                if self.current().type != TokenType.LEFT_PAREN:
+                    raise SyntaxError("Expected '(' after method name")
+
+                self.advance()
+
+                arguments = []
+
+                if self.current().type != TokenType.RIGHT_PAREN:
+                    while True:
+                        arguments.append(self.parse_or())
+
+                        if self.current().type == TokenType.RIGHT_PAREN:
+                            break
+
+                        if self.current().type != TokenType.COMMA:
+                            raise SyntaxError("Expected ','")
+
+                        self.advance()
+
+                self.advance()
+
+                expr = MethodCallExpr(expr, method, arguments)
+
+            # indexing: foo[0]
             while self.current().type == TokenType.LEFT_BRACKET:
                 self.advance()
 
@@ -113,8 +193,6 @@ class Parser:
                 expr = ListIndexExpr(expr, index)
 
             return expr
-
-        raise SyntaxError(f"Unexpected token: {token}")
 
     def parse_term(self):
         left = self.parse_factor()
@@ -198,6 +276,14 @@ class Parser:
             and self.current().value == "for"
         ):
             return self.parse_for()
+
+        if self.current().type == TokenType.BREAK:
+            self.advance()
+            return BreakStmt()
+
+        if self.current().type == TokenType.CONTINUE:
+            self.advance()
+            return ContinueStmt()
 
         return self.parse_assignment()
 

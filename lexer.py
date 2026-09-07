@@ -23,6 +23,20 @@ class Lexer:
             value += self.current()
             self.advance()
 
+        # đọc phần thập phân
+        if self.current() == ".":
+            value += "."
+            self.advance()
+
+            if not self.current().isdigit():
+                raise SyntaxError("Expected digit after '.'")
+
+            while self.current().isdigit():
+                value += self.current()
+                self.advance()
+
+            return Token(TokenType.FLOAT, value)
+
         return Token(TokenType.NUMBER, value)
 
     def read_identifier(self):
@@ -46,6 +60,12 @@ class Lexer:
 
         if value == "not":
             return Token(TokenType.NOT, value)
+
+        if value == "break":
+            return Token(TokenType.BREAK, value)
+
+        if value == "continue":
+            return Token(TokenType.CONTINUE, value)
 
         return Token(TokenType.IDENTIFIER, value)
 
@@ -99,6 +119,11 @@ class Lexer:
                 continue
 
             c = self.current()
+
+            if c == ".":
+                tokens.append(Token(TokenType.DOT, c))
+                self.advance()
+                continue
 
             if c == "+":
                 tokens.append(Token(TokenType.PLUS, c))

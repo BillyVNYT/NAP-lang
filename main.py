@@ -3,7 +3,7 @@ from parser import Parser
 from environment import Environment
 from nap_ast import BuiltinFunction
 import sys
-
+from runtime.builtins import register_builtins
 
 if len(sys.argv) < 2:
     print("Usage: billy <test.nap>")
@@ -31,6 +31,14 @@ env.set(
     )
 )
 
+env.set(
+    "len",
+    BuiltinFunction(
+        lambda args: len(args[0])
+    )
+)
+
+register_builtins(env, BuiltinFunction)
 
 for statement in program:
     statement.evaluate(env)

@@ -1,4 +1,2 @@
-name = "Billy"
-
-print(name)
-print("Hello World")
+for i in range(2, 6):
+    print(i)

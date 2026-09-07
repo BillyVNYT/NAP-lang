@@ -21,6 +21,7 @@ class TokenType(Enum):
 
     COMMA = ","
     COLON = ":"
+    DOT = "."
 
     LEFT_PAREN = "("
     RIGHT_PAREN = ")"
@@ -42,6 +43,11 @@ class TokenType(Enum):
     EOF = "EOF"
 
     STRING = "STRING"
+
+    FLOAT = "FLOAT"
+
+    BREAK = "break"
+    CONTINUE = "continue"
 
 
 class Token:
